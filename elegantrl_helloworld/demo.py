@@ -1,3 +1,9 @@
+import sys
+
+sys.path.append("../")
+
+from os.path import isfile
+
 from elegantrl_helloworld.run import *
 
 """custom env"""
@@ -21,7 +27,10 @@ class PendulumEnv(gym.Wrapper):
         self.target_return = target_return  # episode return is between (-1600, 0)
 
     def reset(self):
-        return self.env.reset().astype(np.float32)
+
+        result = self.env.reset().astype(np.float32)
+
+        return result
 
     def step(self, action: np.ndarray):
         # PendulumEnv set its action space as (-2, +2). It is bad.  # https://github.com/openai/gym/wiki/Pendulum-v0
@@ -39,6 +48,7 @@ def demo_discrete_action_off_policy():
     env_name = [
         "CartPole-v0",
         "LunarLander-v2",
+        "ALE/StarGunner-v5",
     ][ENV_ID]
     gpu_id = GPU_ID  # >=0 means GPU ID, -1 means CPU
 
@@ -99,19 +109,44 @@ def demo_discrete_action_off_policy():
         args.reward_scale = 2**-2
         args.gamma = 0.99
         args.eval_times = 2**4
+
+    elif env_name == "ALE/StarGunner-v5":
+        env_args = get_gym_env_args(gym.make(env_name, obs_type='ram'), if_print=False)
+        env_args['max_step'] = 2000
+        env_args['target_return'] = 2000
+        print(env_args)
+
+        args = Arguments(AgentDQN, env_func=gym.make, env_args=env_args)
+
+        args.if_remove = False
+
+        args.if_allow_break = True
+
+        args.target_step = args.max_step
+        args.net_dim = 2**7
+        args.batch_size = args.net_dim * 2
+
+        args.gamma = 0.97
+        args.eval_times = 2**3
+        args.eval_gap = 2**4
     else:
         raise ValueError("env_name:", env_name)
 
     args.learner_gpus = gpu_id
     args.random_seed += gpu_id
 
-    train_and_evaluate(args)
+    # render_mode = 'human'
+    render_mode = None
+
+    train_and_evaluate(args, if_save=True, render_mode=render_mode)
 
 
 def demo_discrete_action_on_policy():
     env_name = [
         "CartPole-v0",
         "LunarLander-v2",
+        "ALE/Asteroids-v5",
+        "ALE/StarGunner-v5",
     ][ENV_ID]
     gpu_id = GPU_ID  # >=0 means GPU ID, -1 means CPU
 
@@ -160,13 +195,58 @@ def demo_discrete_action_on_policy():
         args.reward_scale = 2**-2
         args.gamma = 0.99
         args.eval_times = 2**4
+
+    elif env_name == "ALE/Asteroids-v5":
+
+        env_args = get_gym_env_args(gym.make(env_name, obs_type='ram'), if_print=False)
+
+        env_args['max_step'] = 2000
+        env_args['target_return'] = 4000
+
+        print(env_args)
+
+        # args = Arguments(AgentPPO, env_func=gym.make, env_args=env_args)
+
+        args = Arguments(AgentDiscretePPO, env_func=gym.make, env_args=env_args)
+        args.if_remove = False
+
+        # args.reward_scale = 2**-2
+
+        args.target_step = args.max_step * 2
+        # args.net_dim = 2**6
+        args.batch_size = args.net_dim * 2
+
+        args.gamma = 0.97
+        args.eval_times = 2**3
+        # args.eval_gap = 2**4
+
+    elif env_name == "ALE/StarGunner-v5":
+
+        # env_args = get_gym_env_args(gym.make(env_name), if_print=False)
+        env_args = get_gym_env_args(gym.make(env_name, obs_type='grayscale'), if_print=False)
+        env_args['max_step'] = 2000
+        env_args['target_return'] = 2000
+        env_args['state_dim'] = env_args['state_dim'][0] * env_args['state_dim'][1]
+
+        print(env_args)
+
+        args = Arguments(AgentDiscretePPO, env_func=gym.make, env_args=env_args)
+        args.if_remove = False
+        args.target_step = args.max_step * 2
+        args.batch_size = args.net_dim * 2
+
+        # args.reward_scale = 2**-2
+        args.gamma = 0.97
+        args.eval_times = 2**3
     else:
         raise ValueError("env_name:", env_name)
 
     args.learner_gpus = gpu_id
     args.random_seed += gpu_id
 
-    train_and_evaluate(args)
+    render_mode = 'human'
+
+    train_and_evaluate(args, if_save=True, render_mode=None)
 
 
 def demo_continuous_action_off_policy():
@@ -271,7 +351,7 @@ def demo_continuous_action_off_policy():
     args.learner_gpus = gpu_id
     args.random_seed += gpu_id
 
-    train_and_evaluate(args)
+    train_and_evaluate(args, if_save=True)
 
 
 def demo_continuous_action_on_policy():
@@ -371,14 +451,17 @@ def demo_continuous_action_on_policy():
     args.learner_gpus = gpu_id
     args.random_seed += gpu_id
 
-    train_and_evaluate(args)
+    train_and_evaluate(args, if_save=True, render_mode=None)
 
 
 if __name__ == "__main__":
-    GPU_ID = 1  # int(sys.argv[1])
+
+    # if_file = isfile(r'./ALE/Asteroids-v5_DiscretePPO_0/')
+
+    GPU_ID = 0  # int(sys.argv[1])
     ENV_ID = 3  # int(sys.argv[2])
 
     # demo_continuous_action_off_policy()
-    demo_continuous_action_on_policy()
+    # demo_continuous_action_on_policy()
     # demo_discrete_action_off_policy()
-    # demo_discrete_action_on_policy()
+    demo_discrete_action_on_policy()

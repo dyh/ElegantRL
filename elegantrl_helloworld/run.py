@@ -1,5 +1,7 @@
 import time
 
+from cv2 import cv2
+
 from elegantrl_helloworld.agent import *
 from elegantrl_helloworld.env import *
 from typing import Tuple
@@ -140,7 +142,7 @@ class Arguments:
         return all((name.find("PPO") == -1, name.find("A2C") == -1))  # if_off_policy
 
 
-def train_and_evaluate(args):
+def train_and_evaluate(args, if_save, render_mode=None):
     """
     The training and evaluating loop.
 
@@ -150,13 +152,22 @@ def train_and_evaluate(args):
     gpu_id = args.learner_gpus
 
     """init"""
-    env = build_env(args.env, args.env_func, args.env_args)
+    env = build_env(args.env, args.env_func, args.env_args, render_mode=render_mode)
 
     agent = init_agent(args, gpu_id, env)
     buffer = init_buffer(args, gpu_id)
     evaluator = init_evaluator(args, gpu_id)
 
-    agent.state = env.reset()
+    # ----
+    frame = env.reset()
+    # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+    # frame = cv2.resize(frame, (84, 84), interpolation=cv2.INTER_AREA)
+
+    frame = np.array(frame).astype(np.float32) / 255.0
+    frame = frame.flatten()
+
+    agent.state = frame
+
     if args.if_off_policy:
         trajectory = agent.explore_env(env, args.target_step)
         buffer.update_buffer((trajectory,))
@@ -186,8 +197,8 @@ def train_and_evaluate(args):
                 or os.path.exists(f"{cwd}/stop")
             )
     print(f"| UsedTime: {time.time() - evaluator.start_time:.0f} | SavedDir: {cwd}")
-    agent.save_or_load_agent(cwd, if_save=True)
-    buffer.save_or_load_history(cwd, if_save=True) if agent.if_off_policy else None
+    agent.save_or_load_agent(cwd, if_save=if_save)
+    buffer.save_or_load_history(cwd, if_save=if_save) if agent.if_off_policy else None
 
 
 def init_agent(args, gpu_id, env=None):
@@ -207,8 +218,15 @@ def init_agent(args, gpu_id, env=None):
     if env is not None:
         """init states"""
         if args.env_num == 1:
+            # TODO 要改这里
+            frame = env.reset()
+            # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            # frame = cv2.resize(frame, (84, 84), interpolation=cv2.INTER_AREA)
+            frame = np.array(frame).astype(np.float32) / 255.0
+            frame = frame.flatten()
+
             states = [
-                env.reset(),
+                frame,
             ]
             assert isinstance(states[0], np.ndarray)
             assert states[0].shape in {(args.state_dim,), args.state_dim}
@@ -290,7 +308,8 @@ class Evaluator:
             f"{'expR':>8}{'objC':>7}{'etc.':>7}"
         )
 
-    def evaluate_and_save(self, act, steps, r_exp, log_tuple) -> Tuple[bool, bool]:
+    #  -> Tuple[bool, bool]
+    def evaluate_and_save(self, act, steps, r_exp, log_tuple):
         """
         Evaluate and save the model.
 
@@ -372,7 +391,14 @@ def get_episode_return_and_step(env, act) -> Tuple[float, int]:
     if_discrete = env.if_discrete
     device = next(act.parameters()).device  # net.parameters() is a Python generator.
 
-    state = env.reset()
+    frame = env.reset()
+    # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+    # frame = cv2.resize(frame, (84, 84), interpolation=cv2.INTER_AREA)
+    frame = np.array(frame).astype(np.float32) / 255.0
+    frame = frame.flatten()
+
+    state = frame
+
     episode_step = None
     episode_return = 0.0  # sum of rewards in an episode
     for episode_step in range(max_step):
@@ -384,6 +410,12 @@ def get_episode_return_and_step(env, act) -> Tuple[float, int]:
             a_tensor.detach().cpu().numpy()[0]
         )  # not need detach(), because using torch.no_grad() outside
         state, reward, done, _ = env.step(action)
+
+        # state = cv2.cvtColor(state, cv2.COLOR_RGB2GRAY)
+        # state = cv2.resize(state, (84, 84), interpolation=cv2.INTER_AREA)
+        state = np.array(state).astype(np.float32) / 255.0
+        state = state.flatten()
+
         episode_return += reward
         if done:
             break

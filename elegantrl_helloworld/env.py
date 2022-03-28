@@ -110,7 +110,7 @@ def kwargs_filter(func, kwargs: dict):
     return {key: kwargs[key] for key in common_args}  # filtered kwargs
 
 
-def build_env(env=None, env_func=None, env_args=None):
+def build_env(env=None, env_func=None, env_args=None, render_mode=None):
     """
     Create an environment. If pass an existed env, copy a new one.
 
@@ -125,7 +125,12 @@ def build_env(env=None, env_func=None, env_args=None):
         import gym
 
         gym.logger.set_level(40)  # Block warning
-        env = env_func(id=env_args["env_name"])
+        # TODO dyh
+        if render_mode is not None:
+            env = env_func(id=env_args["env_name"], obs_type='grayscale', render_mode=render_mode)
+        else:
+            env = env_func(id=env_args["env_name"], obs_type='grayscale')
+        pass
     else:
         env = env_func(**kwargs_filter(env_func.__init__, env_args.copy()))
 

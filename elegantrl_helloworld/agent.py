@@ -2,6 +2,8 @@ import os
 from copy import deepcopy
 from typing import Tuple
 
+from cv2 import cv2
+
 from elegantrl_helloworld.net import *
 
 
@@ -656,11 +658,27 @@ class AgentPPO(AgentBase):
                 ten.cpu() for ten in get_action(ten_s.to(self.device))
             ]  # different
             next_s, reward, done, _ = env.step(get_a_to_e(ten_a)[0].numpy())
+            # next_s = cv2.cvtColor(next_s, cv2.COLOR_RGB2GRAY)
+            # next_s = cv2.resize(next_s, (84, 84), interpolation=cv2.INTER_AREA)
+            next_s = np.array(next_s).astype(np.float32) / 255.0
+            next_s = next_s.flatten()
 
             traj_list.append((ten_s, reward, done, ten_a, ten_n))  # different
 
             step_i += 1
-            state = env.reset() if done else next_s
+
+            if done:
+                frame = env.reset()
+                # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+                # frame = cv2.resize(frame, (84, 84), interpolation=cv2.INTER_AREA)
+                frame = np.array(frame).astype(np.float32) / 255.0
+                frame = frame.flatten()
+                state = frame
+            else:
+                state = next_s
+            pass
+            # state = env.reset() if done else next_s
+
         self.states[0] = state
         last_done[0] = step_i
         return self.convert_trajectory(traj_list, last_done)
