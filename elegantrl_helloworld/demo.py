@@ -1,5 +1,9 @@
 import sys
 
+import wandb
+
+wandb.init(project="ElegantRL", entity="dyh37")
+
 sys.path.append("../")
 
 from os.path import isfile
@@ -225,19 +229,23 @@ def demo_discrete_action_on_policy():
         # env_args = get_gym_env_args(gym.make(env_name), if_print=False)
         env_args = get_gym_env_args(gym.make(env_name, obs_type='grayscale'), if_print=False)
         env_args['max_step'] = 2000
-        env_args['target_return'] = 2000
+        env_args['target_return'] = 5000
         env_args['state_dim'] = env_args['state_dim'][0] * env_args['state_dim'][1]
 
         print(env_args)
 
         args = Arguments(AgentDiscretePPO, env_func=gym.make, env_args=env_args)
         args.if_remove = False
-        args.target_step = args.max_step * 2
-        args.batch_size = args.net_dim * 2
+        # args.target_step = args.max_step
+        # args.batch_size = args.net_dim * 2
 
-        # args.reward_scale = 2**-2
+        # args.net_dim = 2**6
+
+        args.reward_scale = 2**-2
         args.gamma = 0.97
         args.eval_times = 2**3
+        # args.eval_gap = 2**4
+
     else:
         raise ValueError("env_name:", env_name)
 
@@ -457,6 +465,9 @@ def demo_continuous_action_on_policy():
 if __name__ == "__main__":
 
     # if_file = isfile(r'./ALE/Asteroids-v5_DiscretePPO_0/')
+
+    # 导入rom
+    # ale-import-roms roms/
 
     GPU_ID = 0  # int(sys.argv[1])
     ENV_ID = 3  # int(sys.argv[2])
