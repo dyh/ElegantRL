@@ -161,7 +161,7 @@ def train_and_evaluate(args, if_save, render_mode=None):
     # ----
     frame = env.reset()
     # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    frame = cv2.resize(frame, (96, 96), interpolation=cv2.INTER_AREA)
+    frame = cv2.resize(frame, (112, 112), interpolation=cv2.INTER_AREA)
 
     frame = np.array(frame).astype(np.float32) / 255.0
     frame = frame.flatten()
@@ -221,7 +221,7 @@ def init_agent(args, gpu_id, env=None):
             # TODO 要改这里
             frame = env.reset()
             # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-            frame = cv2.resize(frame, (96, 96), interpolation=cv2.INTER_AREA)
+            frame = cv2.resize(frame, (112, 112), interpolation=cv2.INTER_AREA)
             frame = np.array(frame).astype(np.float32) / 255.0
             frame = frame.flatten()
 
@@ -393,7 +393,7 @@ def get_episode_return_and_step(env, act) -> Tuple[float, int]:
 
     frame = env.reset()
     # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    frame = cv2.resize(frame, (96, 96), interpolation=cv2.INTER_AREA)
+    frame = cv2.resize(frame, (112, 112), interpolation=cv2.INTER_AREA)
     frame = np.array(frame).astype(np.float32) / 255.0
     frame = frame.flatten()
 
@@ -412,7 +412,7 @@ def get_episode_return_and_step(env, act) -> Tuple[float, int]:
         state, reward, done, _ = env.step(action)
 
         # state = cv2.cvtColor(state, cv2.COLOR_RGB2GRAY)
-        frame = cv2.resize(frame, (96, 96), interpolation=cv2.INTER_AREA)
+        state = cv2.resize(state, (112, 112), interpolation=cv2.INTER_AREA)
         state = np.array(state).astype(np.float32) / 255.0
         state = state.flatten()
 

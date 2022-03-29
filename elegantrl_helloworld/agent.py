@@ -660,7 +660,7 @@ class AgentPPO(AgentBase):
             next_s, reward, done, _ = env.step(get_a_to_e(ten_a)[0].numpy())
             # next_s = cv2.cvtColor(next_s, cv2.COLOR_RGB2GRAY)
             # next_s = cv2.resize(next_s, (84, 84), interpolation=cv2.INTER_AREA)
-            next_s = cv2.resize(next_s, (96, 96), interpolation=cv2.INTER_AREA)
+            next_s = cv2.resize(next_s, (112, 112), interpolation=cv2.INTER_AREA)
             next_s = np.array(next_s).astype(np.float32) / 255.0
             next_s = next_s.flatten()
 
@@ -671,7 +671,7 @@ class AgentPPO(AgentBase):
             if done:
                 frame = env.reset()
                 # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-                frame = cv2.resize(frame, (96, 96), interpolation=cv2.INTER_AREA)
+                frame = cv2.resize(frame, (112, 112), interpolation=cv2.INTER_AREA)
                 frame = np.array(frame).astype(np.float32) / 255.0
                 frame = frame.flatten()
                 state = frame

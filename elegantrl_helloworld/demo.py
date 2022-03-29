@@ -230,7 +230,8 @@ def demo_discrete_action_on_policy():
         env_args = get_gym_env_args(gym.make(env_name, obs_type='grayscale'), if_print=False)
         env_args['max_step'] = 2000
         env_args['target_return'] = 5000
-        env_args['state_dim'] = env_args['state_dim'][0] * env_args['state_dim'][1]
+        # env_args['state_dim'] = env_args['state_dim'][0] * env_args['state_dim'][1]
+        env_args['state_dim'] = 112 * 112
 
         print(env_args)
 
